@@ -16,12 +16,19 @@ typedef int32_t i32;
 typedef float f32;
 typedef double f64;
 
+#define U32_MAX ((u32) - 1)
+
 #include <math.h>
 #include <float.h>
 #include "ray_math.h"
 #include "ray.h"
 
 #include "ray_win32.h"
+
+// Speed measurements
+// Initial timing: 32 rays - 20400-20650ms, 0.000340 ms/bounce
+// With multi threading: 32 rays - 4000-4700ms, 0.000066-0.000079 ms/bounce
+// Custom random numbers: 32 rays - 3500-4300ms, 0.000061-0.000072 ms/bounce
 
 static u32 get_total_pixel_size(ImageU32 image)
 {
@@ -71,122 +78,32 @@ static void write_image(ImageU32 image, const char* fileName)
 	}
 }
 
-static f32 randomFloatUni()
+static u32 xor_shift32(RandomSeries* series)
 {
-	f32 result = (f32)rand() / (f32)RAND_MAX;
+	u32 x = series->state;
+	x ^= x << 13;
+	x ^= x >> 17;
+	x ^= x << 5;
+	series->state = x;
+
+	return x;
+}
+
+static f32 random_float_uni(RandomSeries* series)
+{
+	f32 result = (f32)xor_shift32(series) / (f32)U32_MAX;
 	return result;
 }
 
-static f32 randomFloatBi()
+static f32 random_float_bi(RandomSeries* series)
 {
-	f32 result = 1.0f - 2.0f * randomFloatUni();
+	f32 result = -1.0f + 2.0f * random_float_uni(series);
 	return result;
 }
 
 static u32* get_pixel_pointer(ImageU32* image, u32 x, u32 y)
 {
 	u32* result = image->pixels + x + (u64)y * image->width;
-	return result;
-}
-
-static Vec3 ray_cast(WorkQueue* queue, World* world, Vec3 rayOrigin, Vec3 rayDir)
-{
-	f32 minHitDist = 0.001f;
-	//NOTE: temporary epsilon
-	f32 epsilon = 0.0001f;
-	u64 bounces = 0;
-
-	Vec3 result = {};
-	Vec3 attenuation = vec3(1.0f, 1.0f, 1.0f);
-	for (u32 bounce = 0; bounce < 8; ++bounce)
-	{
-		++bounces;
-
-		f32 hitDist = FLT_MAX;
-		u32 hitMaterial = 0;
-		Vec3 nextNormal = {};
-		for (u32 planeIndex = 0; planeIndex < world->planeCount; ++planeIndex)
-		{
-			Plane* plane = &world->planes[planeIndex];
-
-			f32 denom = dot(plane->normal, rayDir);
-			if (denom < -epsilon || denom > epsilon)
-			{
-				f32 t = (-plane->dist - dot(plane->normal, rayOrigin)) / denom;
-				if (t > minHitDist && t < hitDist)
-				{
-					hitDist = t;
-					hitMaterial = plane->matIndex;
-
-					nextNormal = plane->normal;
-				}
-			}
-		}
-
-		for (u32 sphereIndex = 0; sphereIndex < world->sphereCount; ++sphereIndex)
-		{
-			Sphere* sphere = &world->spheres[sphereIndex];
-
-			Vec3 sphereRelRayOrigin = rayOrigin - sphere->pos;
-			f32 a = dot(rayDir, rayDir);
-			f32 b = 2.0f * dot(rayDir, sphereRelRayOrigin);
-			f32 c = dot(sphereRelRayOrigin, sphereRelRayOrigin) - sphere->radius * sphere->radius;
-
-			f32 d = square_root(b * b - 4.0f * a * c);
-			f32 denom = 2.0f * a;
-			if (d > epsilon)
-			{
-				f32 tp = (-b + d) / denom;
-				f32 tn = (-b - d) / denom;
-
-				f32 t = tp;
-				if (tn > minHitDist && tn < tp)
-				{
-					t = tn;
-				}
-
-				if (t > minHitDist && t < hitDist)
-				{
-					hitDist = t;
-					hitMaterial = sphere->matIndex;
-
-					nextNormal = vec_normalize(t * rayDir + sphereRelRayOrigin);
-				}
-			}
-		}
-
-		if (hitMaterial)
-		{
-			Material material = world->materials[hitMaterial];
-			
-			result += hadamard(attenuation, material.emitColor);
-
-
-			// TODO: cosine reflection
-			f32 cosAtten = dot(-rayDir, nextNormal);
-			if (cosAtten < 0)
-			{
-				cosAtten = 0;
-			}
-
-			attenuation = hadamard(attenuation, cosAtten * material.reflectColor);
-
-			rayOrigin += hitDist * rayDir;
-			// TODO: reflection
-			Vec3 reflectedRay = rayDir - 2 * dot(rayDir, nextNormal) * nextNormal;
-			Vec3 randomBounce = vec_normalize(nextNormal + vec3(randomFloatBi(), randomFloatBi(), randomFloatBi()));
-			rayDir = vec_normalize(lerp(randomBounce, reflectedRay, material.specular));
-		}
-		else
-		{
-			Material material = world->materials[hitMaterial];
-			result += hadamard(attenuation, material.emitColor);
-			break;
-		}
-	}
-
-	locked_add_and_return_previous(&queue->totalBounces, bounces);
-
 	return result;
 }
 
@@ -200,7 +117,11 @@ static bool render_tile(WorkQueue* queue)
 
 	WorkOrder* order = &queue->workOrders[workOrderIndex];
 	World* world = order->world;
+
+	RandomSeries series = order->entropy;
+
 	ImageU32* image = &order->image;
+
 	u32 xMin = order->minX;
 	u32 xMax = order->maxX;
 	u32 yMin = order->minY;
@@ -242,8 +163,8 @@ static bool render_tile(WorkQueue* queue)
 			Vec3 color = {};
 			for (u32 rayIndex = 0; rayIndex < raysPerPixel; ++rayIndex)
 			{
-				f32 offX = filmX + halfPixW * randomFloatBi();
-				f32 offY = filmY + halfPixH * randomFloatBi();
+				f32 offX = filmX + halfPixW * random_float_bi(&series);
+				f32 offY = filmY + halfPixH * random_float_bi(&series);
 				Vec3 filmPos = filmCenter + offX * 0.5f * filmW * cameraX + offY * 0.5f * filmH * cameraY;
 
 				Vec3 rayOrigin = cameraPos;
@@ -332,7 +253,7 @@ static bool render_tile(WorkQueue* queue)
 						rayOrigin += hitDist * rayDir;
 						// TODO: reflection
 						Vec3 reflectedRay = rayDir - 2 * dot(rayDir, nextNormal) * nextNormal;
-						Vec3 randomBounce = vec_normalize(nextNormal + vec3(randomFloatBi(), randomFloatBi(), randomFloatBi()));
+						Vec3 randomBounce = vec_normalize(nextNormal + vec3(random_float_bi(&series), random_float_bi(&series), random_float_bi(&series)));
 						rayDir = vec_normalize(lerp(randomBounce, reflectedRay, material.specular));
 					}
 					else
@@ -386,7 +307,7 @@ int main(int argc, char** argv)
 	planes[0].matIndex = 1;
 
 	Sphere spheres[5] = {};
-	spheres[0].pos = vec3(0.0f, 0.0f, 0.0f);
+	spheres[0].pos = vec3(0.0f, -1.0f, 0.0f);
 	spheres[0].radius = 1.0f;
 	spheres[0].matIndex = 2;
 	spheres[1].pos = vec3(3.0f, -2.0f, 0.0f);
@@ -398,8 +319,8 @@ int main(int argc, char** argv)
 	spheres[3].pos = vec3(1.0f, -1.0f, 2.5f);
 	spheres[3].radius = 1.0f;
 	spheres[3].matIndex = 5;
-	spheres[4].pos = vec3(-2.0f, 3.0f, 0.0f);
-	spheres[4].radius = 2.0f;
+	spheres[4].pos = vec3(-3.0f, 5.0f, 0.0f);
+	spheres[4].radius = 3.0f;
 	spheres[4].matIndex = 6;
 
 	World world = {};
@@ -455,6 +376,10 @@ int main(int argc, char** argv)
 			order->maxX = maxX;
 			order->minY = minY;
 			order->maxY = maxY;
+
+			// NOTE: temporary entropy
+			RandomSeries series = { tileX * 123 + tileY * 127659 };
+			order->entropy = series;
 		}
 	}
 	assert(queue.workOrderCount == tileTotal);

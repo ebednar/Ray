@@ -65,6 +65,11 @@ struct World
 	Sphere* spheres;
 };
 
+struct RandomSeries
+{
+	u32 state;
+};
+
 struct WorkOrder
 {
 	World* world;
@@ -73,6 +78,7 @@ struct WorkOrder
 	u32 maxX;
 	u32 minY;
 	u32 maxY;
+	RandomSeries entropy;
 };
 
 struct WorkQueue
