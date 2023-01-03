@@ -1,12 +1,12 @@
 #if !defined RAY_MATH_H
 # define RAY_MATH_H
 
-inline f32 square(f32 a)
+inline f32 Square(f32 a)
 {
 	return a * a;
 }
 
-inline f32 clamp(f32 min, f32 max, f32 value)
+inline f32 Clamp(f32 min, f32 max, f32 value)
 {
 	f32 result = value;
 
@@ -22,26 +22,26 @@ inline f32 clamp(f32 min, f32 max, f32 value)
 	return result;
 }
 
-inline f32 xlamp01(f32 value)
+inline f32 Clamp01(f32 value)
 {
-	f32 result = clamp(0.0f, 1.0f, value);
+	f32 result = Clamp(0.0f, 1.0f, value);
 
 	return result;
 }
 
-inline i32 sign_of(i32 a)
+inline i32 SignOf(i32 a)
 {
 	i32 result = a >= 0 ? 1 : -1;
 	return result;
 }
 
-inline f32 square_root(f32 a)
+inline f32 SquareRoot(f32 a)
 {
 	f32 result = sqrtf(a);
 	return result;
 }
 
-inline f32 safe_ratio_n(f32 numerator, f32 divisor, f32 n)
+inline f32 SafeRatioN(f32 numerator, f32 divisor, f32 n)
 {
 	f32 result = n;
 
@@ -53,49 +53,49 @@ inline f32 safe_ratio_n(f32 numerator, f32 divisor, f32 n)
 	return result;
 }
 
-inline f32 safe_ratio_0(f32 numerator, f32 divisor)
+inline f32 SafeRatio0(f32 numerator, f32 divisor)
 {
-	return safe_ratio_n(numerator, divisor, 0.0f);
+	return SafeRatioN(numerator, divisor, 0.0f);
 }
 
 
-inline u32 round_f32_to_u32(f32 f)
+inline u32 RoundF32ToU32(f32 f)
 {
 	u32 result = (u32)(f + 0.5);
 	return result;
 }
 
-inline i32 round_f32_to_i32(f32 f)
+inline i32 RoundF32ToI32(f32 f)
 {
 	i32 result = (i32)(f + 0.5);
 	return result;
 }
 
-inline i32 floor_f32_to_u32(f32 f)
+inline i32 FloorF32ToU32(f32 f)
 {
 	i32 result = (i32)floorf(f);
 	return result;
 }
 
-inline i32 ceil_f32_to_u32(f32 f)
+inline i32 CeilF32ToU32(f32 f)
 {
 	i32 result = (i32)ceilf(f);
 	return result;
 }
 
-inline f32 sin(f32 angle)
+inline f32 Sin(f32 angle)
 {
 	f32 result = sinf(angle);
 	return result;
 }
 
-inline f32 cos(f32 angle)
+inline f32 Cos(f32 angle)
 {
 	f32 result = cosf(angle);
 	return result;
 }
 
-inline f32 atan2(f32 y, f32 x)
+inline f32 Atan2(f32 y, f32 x)
 {
 	f32 result = atan2f(y, x);
 	return result;
@@ -105,7 +105,7 @@ inline f32 atan2(f32 y, f32 x)
 /// vector 2
 ///
 
-union Vec2
+union vec2
 {
 	struct
 	{
@@ -114,113 +114,113 @@ union Vec2
 	f32 e[2];
 };
 
-inline Vec2 vec2(f32 a)
+inline vec2 Vec2(f32 a)
 {
-	Vec2 c;
+	vec2 c;
 
 	c.x = a;
 	c.y = a;
 	return c;
 }
 
-inline Vec2 vec2(f32 x, f32 y)
+inline vec2 Vec2(f32 x, f32 y)
 {
-	Vec2 c;
+	vec2 c;
 
 	c.x = x;
 	c.y = y;
 	return c;
 }
 
-inline Vec2 operator+(Vec2 a, Vec2 b)
+inline vec2 operator+(vec2 a, vec2 b)
 {
-	Vec2 c;
+	vec2 c;
 
 	c.x = a.x + b.x;
 	c.y = a.y + b.y;
 	return c;
 }
 
-inline Vec2 operator-(Vec2 a, Vec2 b)
+inline vec2 operator-(vec2 a, vec2 b)
 {
-	Vec2 c;
+	vec2 c;
 
 	c.x = a.x - b.x;
 	c.y = a.y - b.y;
 	return c;
 }
 
-inline Vec2 operator-(Vec2 a)
+inline vec2 operator-(vec2 a)
 {
-	Vec2 c;
+	vec2 c;
 
 	c.x = -a.x;
 	c.y = -a.y;
 	return c;
 }
 
-inline Vec2 operator*(f32 a, Vec2 b)
+inline vec2 operator*(f32 a, vec2 b)
 {
-	Vec2 c;
+	vec2 c;
 
 	c.x = a * b.x;
 	c.y = a * b.y;
 	return c;
 }
 
-inline Vec2 operator*(Vec2 b, f32 a)
+inline vec2 operator*(vec2 b, f32 a)
 {
-	Vec2 c;
+	vec2 c;
 
 	c.x = a * b.x;
 	c.y = a * b.y;
 	return c;
 }
 
-inline Vec2& operator*=(Vec2& a, f32 b)
+inline vec2& operator*=(vec2& a, f32 b)
 {
 	a = b * a;
 
 	return a;
 }
 
-inline Vec2& operator+=(Vec2& a, Vec2 b)
+inline vec2& operator+=(vec2& a, vec2 b)
 {
 	a = a + b;
 
 	return a;
 }
 
-inline f32 dot(Vec2 a, Vec2 b)
+inline f32 Dot(vec2 a, vec2 b)
 {
 	f32 result = a.x * b.x + a.y * b.y;
 	return result;
 }
 
-inline f32 vec_length_sq(Vec2 a)
+inline f32 VecLengthSq(vec2 a)
 {
-	f32 result = dot(a, a);
+	f32 result = Dot(a, a);
 	return result;
 }
 
-inline f32 vec_length(Vec2 a)
+inline f32 VecLength(vec2 a)
 {
-	f32 result = square_root(vec_length_sq(a));
+	f32 result = SquareRoot(VecLengthSq(a));
 	return result;
 }
 
-inline Vec2 hadamard(Vec2 a, Vec2 b)
+inline vec2 Hadamard(vec2 a, vec2 b)
 {
-	Vec2 result = { a.x * b.x, a.y * b.y };
+	vec2 result = { a.x * b.x, a.y * b.y };
 
 	return result;
 }
 
-inline Vec2 clamp01(Vec2 value)
+inline vec2 Clamp01(vec2 value)
 {
-	Vec2 result;
-	result.x = clamp(0.0f, 1.0f, value.x);
-	result.y = clamp(0.0f, 1.0f, value.y);
+	vec2 result;
+	result.x = Clamp(0.0f, 1.0f, value.x);
+	result.y = Clamp(0.0f, 1.0f, value.y);
 
 	return result;
 }
@@ -229,27 +229,27 @@ inline Vec2 clamp01(Vec2 value)
 /// vector 3
 ///
 
-union Vec3
-{
-	struct
-	{
-		f32 x, y, z;
-	};
-	struct
-	{
-		f32 r, g, b;
-	};
-	struct
-	{
-		Vec2 xy;
-		f32 z;
-	};
-	f32 e[3];
-};
+//union vec3
+//{
+//	struct
+//	{
+//		f32 x, y, z;
+//	};
+//	struct
+//	{
+//		f32 r, g, b;
+//	};
+//	struct
+//	{
+//		vec2 xy;
+//		f32 z;
+//	};
+//	f32 e[3];
+//};
 
-inline Vec3 vec3(f32 a)
+inline lane_v3 Vec3(f32 a)
 {
-	Vec3 c;
+	lane_v3 c;
 
 	c.x = a;
 	c.y = a;
@@ -257,9 +257,9 @@ inline Vec3 vec3(f32 a)
 	return c;
 }
 
-inline Vec3 vec3(f32 x, f32 y, f32 z)
+inline lane_v3 Vec3(f32 x, f32 y, f32 z)
 {
-	Vec3 c;
+	lane_v3 c;
 
 	c.x = x;
 	c.y = y;
@@ -267,9 +267,9 @@ inline Vec3 vec3(f32 x, f32 y, f32 z)
 	return c;
 }
 
-inline Vec3 vec3(Vec2 xy, f32 z)
+inline lane_v3 Vec3(vec2 xy, f32 z)
 {
-	Vec3 c;
+	lane_v3 c;
 
 	c.x = xy.x;
 	c.y = xy.y;
@@ -277,19 +277,19 @@ inline Vec3 vec3(Vec2 xy, f32 z)
 	return c;
 }
 
-inline Vec3 operator+(Vec3 a, Vec3 b)
+inline lane_v3 LaneV3(lane_f32 x, lane_f32 y, lane_f32 z)
 {
-	Vec3 c;
+	lane_v3 c;
 
-	c.x = a.x + b.x;
-	c.y = a.y + b.y;
-	c.z = a.z + b.z;
+	c.x = x;
+	c.y = y;
+	c.z = z;
 	return c;
 }
 
-inline Vec3 operator-(Vec3 a, Vec3 b)
+inline lane_v3 operator-(lane_v3 a, lane_v3 b)
 {
-	Vec3 c;
+	lane_v3 c;
 
 	c.x = a.x - b.x;
 	c.y = a.y - b.y;
@@ -297,9 +297,9 @@ inline Vec3 operator-(Vec3 a, Vec3 b)
 	return c;
 }
 
-inline Vec3 operator-(Vec3 a)
+inline lane_v3 operator-(lane_v3 a)
 {
-	Vec3 c;
+	lane_v3 c;
 
 	c.x = -a.x;
 	c.y = -a.y;
@@ -307,9 +307,9 @@ inline Vec3 operator-(Vec3 a)
 	return c;
 }
 
-inline Vec3 operator*(f32 a, Vec3 b)
+inline lane_v3 operator*(f32 a, lane_v3 b)
 {
-	Vec3 c;
+	lane_v3 c;
 
 	c.x = a * b.x;
 	c.y = a * b.y;
@@ -317,9 +317,9 @@ inline Vec3 operator*(f32 a, Vec3 b)
 	return c;
 }
 
-inline Vec3 operator*(Vec3 b, f32 a)
+inline lane_v3 operator*(lane_v3 b, f32 a)
 {
-	Vec3 c;
+	lane_v3 c;
 
 	c.x = a * b.x;
 	c.y = a * b.y;
@@ -327,29 +327,29 @@ inline Vec3 operator*(Vec3 b, f32 a)
 	return c;
 }
 
-inline Vec3& operator*=(Vec3& a, f32 b)
+inline lane_v3& operator*=(lane_v3& a, f32 b)
 {
 	a = b * a;
 
 	return a;
 }
 
-inline Vec3& operator+=(Vec3& a, Vec3 b)
+inline lane_v3& operator+=(lane_v3& a, lane_v3 b)
 {
 	a = a + b;
 
 	return a;
 }
 
-inline f32 dot(Vec3 a, Vec3 b)
+inline lane_f32 Dot(lane_v3 a, lane_v3 b)
 {
-	f32 result = a.x * b.x + a.y * b.y + a.z * b.z;
+	lane_f32 result = a.x * b.x + a.y * b.y + a.z * b.z;
 	return result;
 }
 
-inline Vec3 cross(Vec3 a, Vec3 b)
+inline lane_v3 Cross(lane_v3 a, lane_v3 b)
 {
-	Vec3 result;
+	lane_v3 result;
 
 	result.x = a.y * b.z - a.z * b.y;
 	result.y = a.z * b.x - a.x * b.z;
@@ -358,190 +358,52 @@ inline Vec3 cross(Vec3 a, Vec3 b)
 	return result;
 }
 
-inline f32 vec_length_sq(Vec3 a)
+inline lane_f32 VecLengthSq(lane_v3 a)
 {
-	f32 result = dot(a, a);
+	lane_f32 result = Dot(a, a);
 	return result;
 }
 
-inline f32 vec_length(Vec3 a)
+inline lane_f32 VecLength(lane_v3 a)
 {
-	f32 result = square_root(vec_length_sq(a));
+	lane_f32 result = SquareRoot(VecLengthSq(a));
 	return result;
 }
 
-inline Vec3 hadamard(Vec3 a, Vec3 b)
+inline lane_v3 Hadamard(lane_v3 a, lane_v3 b)
 {
-	Vec3 result = { a.x * b.x, a.y * b.y, a.z * b.z };
-
-	return result;
-}
-
-inline Vec3 clamp01(Vec3 value)
-{
-	Vec3 result;
-	result.x = clamp(0.0f, 1.0f, value.x);
-	result.y = clamp(0.0f, 1.0f, value.y);
-	result.z = clamp(0.0f, 1.0f, value.z);
+	lane_v3 result = { a.x * b.x, a.y * b.y, a.z * b.z };
 
 	return result;
 }
 
-inline Vec3 vec_normalize(Vec3 a)
+inline lane_v3 Clamp01(lane_v3 value)
 {
-	Vec3 result = {};
-	f32 lenSq = vec_length_sq(a);
-	if (lenSq > square(0.0001f))
-	{
-		result = a * (1.0f / square_root(lenSq));
-	}
+	lane_v3 result;
+	result.x = Clamp01(value.x);
+	result.y = Clamp01(value.y);
+	result.z = Clamp01(value.z);
 
 	return result;
 }
 
-///
-/// vector 4
-///
-
-union Vec4
+inline lane_v3 VecNormalize(lane_v3 a)
 {
-	struct
-	{
-		f32 x, y, z, w;
-	};
-	struct
-	{
-		f32 r, g, b, a;
-	};
-	f32 e[4];
-};
-
-inline Vec4 vec4(f32 x, f32 y, f32 z, f32 w)
-{
-	Vec4 c;
-
-	c.x = x;
-	c.y = y;
-	c.z = z;
-	c.w = w;
-	return c;
-}
-
-inline Vec4 vec4(Vec3 a, f32 w)
-{
-	Vec4 c;
-
-	c.x = a.x;
-	c.y = a.y;
-	c.z = a.z;
-	c.w = w;
-	return c;
-}
-
-inline Vec4 operator+(Vec4 a, Vec4 b)
-{
-	Vec4 c;
-
-	c.x = a.x + b.x;
-	c.y = a.y + b.y;
-	c.z = a.z + b.z;
-	c.w = a.w + b.w;
-	return c;
-}
-
-inline Vec4 operator-(Vec4 a, Vec4 b)
-{
-	Vec4 c;
-
-	c.x = a.x - b.x;
-	c.y = a.y - b.y;
-	c.z = a.z - b.z;
-	c.w = a.w - b.w;
-	return c;
-}
-
-inline Vec4 operator-(Vec4 a)
-{
-	Vec4 c;
-
-	c.x = -a.x;
-	c.y = -a.y;
-	c.z = -a.z;
-	c.w = -a.w;
-	return c;
-}
-
-inline Vec4 operator*(f32 a, Vec4 b)
-{
-	Vec4 c;
-
-	c.x = a * b.x;
-	c.y = a * b.y;
-	c.z = a * b.z;
-	c.w = a * b.w;
-	return c;
-}
-
-inline Vec4 operator*(Vec4 b, f32 a)
-{
-	Vec4 c;
-
-	c.x = a * b.x;
-	c.y = a * b.y;
-	c.z = a * b.z;
-	c.w = a * b.w;
-	return c;
-}
-
-inline Vec4& operator*=(Vec4& a, f32 b)
-{
-	a = b * a;
-
-	return a;
-}
-
-inline Vec4& operator+=(Vec4& a, Vec4 b)
-{
-	a = a + b;
-
-	return a;
-}
-
-inline u32 rgba_pack4x8(Vec4 unpacked)
-{
-	u32 result = ((round_f32_to_u32(unpacked.a) << 24) |
-				(round_f32_to_u32(unpacked.b) << 16) |
-				(round_f32_to_u32(unpacked.g) << 8) |
-				(round_f32_to_u32(unpacked.r) << 0));
+	lane_v3 result = {};
+	lane_f32 lenSq = VecLengthSq(a);
+	lane_u32 mask = (lenSq > Square(0.0001f));
+	ConditionalAssign(&result, mask, a * (1.0f / SquareRoot(lenSq)));
 
 	return result;
 }
 
-inline u32 bgra_pack4x8(Vec4 unpacked)
+inline lane_v3 Lerp(lane_v3 a, lane_v3 b, lane_f32 t)
 {
-	u32 result = ((round_f32_to_u32(unpacked.a) << 24) |
-				(round_f32_to_u32(unpacked.r) << 16) |
-				(round_f32_to_u32(unpacked.g) << 8) |
-				(round_f32_to_u32(unpacked.b) << 0));
-
+	lane_v3 result = (1.0f - t) * a + t * b;
 	return result;
 }
 
-inline Vec4 linear1_to_SRGB255(Vec4 c)
-{
-	Vec4 result;
-
-	f32 one255 = 255.0f;
-
-	result.r = one255 * square_root(c.r);
-	result.g = one255 * square_root(c.g);
-	result.b = one255 * square_root(c.b);
-	result.a = one255 * c.a;
-
-	return result;
-}
-
-inline f32 linear_to_SRGB255(f32 l)
+inline f32 LinearToSRGB255(f32 l)
 {
 	f32 s;
 
@@ -563,15 +425,9 @@ inline f32 linear_to_SRGB255(f32 l)
 	return s;
 }
 
-inline f32 lerp(f32 a, f32 b, f32 t)
+inline f32 Lerp(f32 a, f32 b, f32 t)
 {
 	f32 result = (1.0f - t) * a + t * b;
-	return result;
-}
-
-inline Vec3 lerp(Vec3 a, Vec3 b, f32 t)
-{
-	Vec3 result = (1.0f - t) * a + t * b;
 	return result;
 }
 

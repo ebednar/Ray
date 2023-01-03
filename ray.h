@@ -34,21 +34,21 @@ struct ImageU32
 
 struct Material
 {
-	Vec3 emitColor;
-	Vec3 reflectColor;
+	vec3 emitColor;
+	vec3 reflectColor;
 	f32 specular; // 0 - pure diffuse, 1 - mirror
 };
 
 struct Plane
 {
-	Vec3 normal;
+	vec3 normal;
 	f32 dist;
 	u32 matIndex;
 };
 
 struct Sphere
 {
-	Vec3 pos;
+	vec3 pos;
 	f32 radius;
 	u32 matIndex;
 };
@@ -67,7 +67,7 @@ struct World
 
 struct RandomSeries
 {
-	u32 state;
+	lane_u32 state;
 };
 
 struct WorkOrder
@@ -91,6 +91,34 @@ struct WorkQueue
 
 	u32 raysPerPixel;
 	u32 maxBounceCount;
+};
+
+
+struct CastState
+{
+	// In
+	World* world;
+	u32 raysPerPixel;
+	u32 maxBounceCount;
+	RandomSeries* entropy;
+
+	vec3 cameraX;
+	vec3 cameraY;
+	vec3 cameraZ;
+	vec3 cameraPos;
+
+	f32 filmW;
+	f32 filmH;
+	vec3 filmCenter;
+	f32 halfPixW;
+	f32 halfPixH;
+
+	f32 filmX;
+	f32 filmY;
+
+	// Out
+	vec3 finalColor;
+	u64 bouncesComputed;
 };
 
 #endif

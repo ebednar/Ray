@@ -3,23 +3,23 @@
 
 #include <windows.h>
 
-static bool render_tile(WorkQueue* queue);
+static bool RenderTile(WorkQueue* queue);
 
-static DWORD WINAPI thread_proc(void* lpParameter)
+static DWORD WINAPI ThreadProc(void* lpParameter)
 {
 	WorkQueue* queue = (WorkQueue*)lpParameter;
-	while (render_tile(queue)) {};
+	while (RenderTile(queue)) {};
 	return 0;
 }
 
-static void create_thread(void* parametr)
+static void CreateThread(void* parametr)
 {
 	DWORD threadID;
-	HANDLE handle = CreateThread(NULL, 0, thread_proc, parametr, 0, &threadID);
+	HANDLE handle = CreateThread(NULL, 0, ThreadProc, parametr, 0, &threadID);
 	CloseHandle(handle);
 }
 
-static u32 get_CPU_core_count()
+static u32 GetCpuCoreCount()
 {
 	SYSTEM_INFO info;
 	GetSystemInfo(&info);
@@ -28,7 +28,7 @@ static u32 get_CPU_core_count()
 	return result;
 }
 
-static u64 locked_add_and_return_previous(u64 volatile* value, u64 a)
+static u64 LockedAdd(u64 volatile* value, u64 a)
 {
 	u64 result = InterlockedExchangeAdd64((volatile LONG64*)value, a);
 

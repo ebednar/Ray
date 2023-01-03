@@ -29,5 +29,14 @@
     <ClInclude Include="ray_win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ray_lane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="random_gen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ray_lane_4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
