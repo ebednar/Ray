@@ -145,15 +145,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ray.cpp" />
+    <ClCompile Include="src\ray.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="random_gen.h" />
-    <ClInclude Include="ray.h" />
-    <ClInclude Include="ray_lane_4.h" />
-    <ClInclude Include="ray_math.h" />
-    <ClInclude Include="ray_win32.h" />
-    <ClInclude Include="ray_lane.h" />
+    <ClInclude Include="src\random_gen.h" />
+    <ClInclude Include="src\ray.h" />
+    <ClInclude Include="src\ray_lane_4.h" />
+    <ClInclude Include="src\ray_math.h" />
+    <ClInclude Include="src\ray_win32.h" />
+    <ClInclude Include="src\ray_lane.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

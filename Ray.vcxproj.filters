@@ -15,27 +15,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ray.cpp">
+    <ClCompile Include="src\ray.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ray.h">
+    <ClInclude Include="src\ray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ray_math.h">
+    <ClInclude Include="src\ray_math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ray_win32.h">
+    <ClInclude Include="src\ray_win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ray_lane.h">
+    <ClInclude Include="src\ray_lane.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="random_gen.h">
+    <ClInclude Include="src\random_gen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ray_lane_4.h">
+    <ClInclude Include="src\ray_lane_4.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
