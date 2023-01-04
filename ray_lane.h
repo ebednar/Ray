@@ -142,6 +142,8 @@ vec3 Extract0(lane_v3 a)
 	return result;
 }
 
+#define  EXTRACT_F32(a, index) ((f32*)&a)[index]
+
 void ConditionalAssign(lane_v3* dest, lane_u32 mask, lane_v3 source)
 {
 	ConditionalAssign(&dest->x, mask, source.x);

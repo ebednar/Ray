@@ -32,16 +32,23 @@ struct ImageU32
 	u32* pixels;
 };
 
+struct brdf_table
+{
+	u32 count[3];
+	vec3* values;
+};
+
 struct Material
 {
 	vec3 emitColor;
 	vec3 reflectColor;
 	f32 specular; // 0 - pure diffuse, 1 - mirror
+	brdf_table brdf;
 };
 
 struct Plane
 {
-	vec3 normal;
+	vec3 normal, tangen, binormal;
 	f32 dist;
 	u32 matIndex;
 };

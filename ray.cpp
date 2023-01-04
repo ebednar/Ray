@@ -22,7 +22,10 @@ typedef double f64;
 
 #define U32_MAX ((u32) - 1)
 
+#define PI32 3.14159f
+
 #include <math.h>
+
 #include <float.h>
 #include "ray_lane.h"
 #include "ray_math.h"
@@ -91,6 +94,59 @@ static u32* GetPixelPointer(ImageU32* image, u32 x, u32 y)
 	return result;
 }
 
+static lane_v3 BRDFLookup(Material* materials, lane_u32 hitMaterial, lane_v3 viewDir, lane_v3 normal, lane_v3 tangent, lane_v3 binormal, lane_v3 lightDir)
+{
+	lane_v3 halfVec = VecNormalize(0.5f * (viewDir + lightDir));
+	lane_v3 lw;
+	lw.x = Dot(lightDir, tangent);
+	lw.y = Dot(lightDir, binormal);
+	lw.z = Dot(lightDir, normal);
+	lane_v3 hw;
+	hw.x = Dot(halfVec, tangent);
+	hw.y = Dot(halfVec, binormal);
+	hw.z = Dot(halfVec, normal);
+
+	lane_v3 diffY = VecNormalize(Cross(hw, tangent));
+	lane_v3 diffX = Cross(diffY, hw);
+	lane_f32 diffXDot = Dot(diffX, lw);
+	lane_f32 diffYDot = Dot(diffY, lw);
+	lane_f32 diffZDot = Dot(hw, lw);
+
+	lane_v3 result;
+	for (u32 index = 0; index < LANE_WIDTH; ++index)
+	{
+		f32 thetaHalf = acosf(EXTRACT_F32(hw.z, index));
+		f32 thetaDiff = acosf(EXTRACT_F32(diffZDot, index));
+		f32 phiDiff = atan2f(EXTRACT_F32(diffYDot, index), EXTRACT_F32(diffXDot, index));
+
+		if (phiDiff < 0)
+		{
+			phiDiff += PI32;
+		}
+		brdf_table* table = &(materials[((u32 *)&hitMaterial)[index]].brdf);
+
+		f32 f0 = SquareRoot(Clamp01(thetaHalf / (0.5f * PI32)));
+		u32 i0 = RoundF32ToU32((table->count[0] - 1) * f0);
+
+		f32 f1 = Clamp01(thetaDiff / (0.5f * PI32));
+		u32 i1 = RoundF32ToU32((table->count[1] - 1) * f1);
+
+		f32 f2 = Clamp01(phiDiff / (PI32));
+		u32 i2 = RoundF32ToU32((table->count[2] - 1) * f2);
+
+		u32 matIndex = i2 + i1 * table->count[2] + i0 * table->count[1] * table->count[2];
+
+		assert(matIndex < table->count[0] * table->count[1] & table->count[2]);
+		vec3 color = table->values[matIndex];
+
+		((f32*)&result.x)[index] = color.x;
+		((f32*)&result.y)[index] = color.y;
+		((f32*)&result.z)[index] = color.z;
+	}
+
+	return result;
+}
+
 static void CastSampleRays(CastState* cast)
 {
 	World* world = cast->world;
@@ -140,12 +196,17 @@ static void CastSampleRays(CastState* cast)
 
 			lane_f32 hitDist = LaneF32FromF32(FLT_MAX);
 			lane_u32 hitMaterial = LaneU32FromU32(0);
-			lane_v3 nextNormal = {};
+			lane_v3 normal = {};
+			lane_v3 tangent = {};
+			lane_v3 binormal = {};
+
 			for (u32 planeIndex = 0; planeIndex < world->planeCount; ++planeIndex)
 			{
 				Plane* plane = &world->planes[planeIndex];
 
 				lane_v3 planeN = LaneV3FromV3(plane->normal);
+				lane_v3 planeT = LaneV3FromV3(plane->tangen);
+				lane_v3 planeB = LaneV3FromV3(plane->binormal);
 				lane_f32 planeDist = LaneF32FromF32(plane->dist);
 
 				lane_f32 denom = Dot(planeN, rayDir);
@@ -160,7 +221,9 @@ static void CastSampleRays(CastState* cast)
 						lane_u32 planeMatIndex = LaneU32FromU32(plane->matIndex);
 						ConditionalAssign(&hitDist, hitMask, t);
 						ConditionalAssign(&hitMaterial, hitMask, planeMatIndex);
-						ConditionalAssign(&nextNormal, hitMask, planeN);
+						ConditionalAssign(&normal, hitMask, planeN);
+						ConditionalAssign(&tangent, hitMask, planeT);
+						ConditionalAssign(&binormal, hitMask, planeB);
 					}
 				}
 			}
@@ -197,7 +260,13 @@ static void CastSampleRays(CastState* cast)
 						lane_u32 sphereMatIndex = LaneU32FromU32(sphere->matIndex);
 						ConditionalAssign(&hitDist, hitMask, t);
 						ConditionalAssign(&hitMaterial, hitMask, sphereMatIndex);
-						ConditionalAssign(&nextNormal, hitMask, VecNormalize(t * rayDir + sphereRelRayOrigin));
+						ConditionalAssign(&normal, hitMask, VecNormalize(t * rayDir + sphereRelRayOrigin));
+
+						lane_v3 tan = VecNormalize(Cross(Vec3(0.0f, 0.0f, 1.0f), normal));
+						lane_v3 bitan = Cross(normal, tan);
+
+						ConditionalAssign(&tangent, hitMask, tan);
+						ConditionalAssign(&binormal, hitMask, bitan);
 					}
 				}
 			}
@@ -214,14 +283,18 @@ static void CastSampleRays(CastState* cast)
 				break;
 			}
 
-			lane_f32 cosAtten = Max(Dot(-rayDir, nextNormal), LaneF32FromF32(0.0f));
-			attenuation = Hadamard(attenuation, cosAtten * reflectColor);
+			//lane_f32 cosAtten = Max(Dot(-rayDir, normal), LaneF32FromF32(0.0f));
+			//attenuation = Hadamard(attenuation, cosAtten * reflectColor);
 
 			rayOrigin += hitDist * rayDir;
 			// TODO: reflection
-			lane_v3 reflectedRay = rayDir - 2 * Dot(rayDir, nextNormal) * nextNormal;
-			lane_v3 randomBounce = VecNormalize(nextNormal + LaneV3(RandomFloatBi(entropy), RandomFloatBi(entropy), RandomFloatBi(entropy)));
-			rayDir = VecNormalize(Lerp(randomBounce, reflectedRay, matSpecular));
+			lane_v3 reflectedRay = rayDir - 2 * Dot(rayDir, normal) * normal;
+			lane_v3 randomBounce = VecNormalize(normal + LaneV3(RandomFloatBi(entropy), RandomFloatBi(entropy), RandomFloatBi(entropy)));
+			lane_v3 nextRayDir = VecNormalize(Lerp(randomBounce, reflectedRay, matSpecular));
+
+			lane_v3 refColor = BRDFLookup(world->materials, hitMaterial, -rayDir, normal, tangent, binormal, nextRayDir);
+			attenuation = Hadamard(attenuation, refColor);
+			rayDir = nextRayDir;
 		}
 
 		color += contrib * sample;
@@ -315,6 +388,40 @@ static bool RenderTile(WorkQueue* queue)
 	return true;
 }
 
+static vec3 nullBRDFValue = { 0.0f, 0.0f, 0.0f };
+static void NullBRDF(brdf_table* table)
+{
+	table->count[0] = table->count[1] = table->count[2] = 1;
+	table->values = &nullBRDFValue;
+}
+
+static void LoadBRDF(const char* path, brdf_table* dest)
+{
+	FILE* file = fopen(path, "rb");
+	if (file)
+	{
+		fread(dest->count, sizeof(dest->count), 1, file);
+		u32 totalCount = dest->count[0] * dest->count[1] * dest->count[2];
+		u32 totalReadSize = totalCount * sizeof(f64) * 3;
+		u32 totalTableSize = totalCount * sizeof(vec3);
+		f64* tmp = (f64 *)malloc(totalReadSize);
+		dest->values = (vec3*)malloc(totalTableSize);
+		fread(tmp, totalReadSize, 1, file);
+		for (u32 index = 0; index < totalCount; ++index)
+		{
+			dest->values[index].x = (f32)tmp[index];
+			dest->values[index].y = (f32)tmp[index + totalCount];
+			dest->values[index].z = (f32)tmp[index + 2 * totalCount];
+		}
+		fclose(file);
+		free(tmp);
+	}
+	else
+	{
+		printf("Unable to open BRDF file %s.\n", path);
+	}
+}
+
 int main(int argc, char** argv)
 {
 	Material materials[7] =
@@ -322,24 +429,29 @@ int main(int argc, char** argv)
 		{ {0.5f, 0.8f, 1.0f	}, { }, 0.0f },
 		{ { }, {0.6f, 0.6f, 0.6f }, 0.0f },
 		{ { }, {0.5f, 0.5f, 1.0f }, 0.0f },
-		{ {8.0f, 4.0f, 0.5f }, { }, 0.0f },
+		{ {50.0f, 15.0f, 1.0f }, { }, 0.0f },
 		{ { }, {0.1f, 1.0f, 0.8f }, 1.0f },
 		{ { }, {0.5f, 0.2f, 0.9f }, 0.85f },
 		{ { }, {0.99f, 0.99f, 0.99f }, 1.0f },
 	};
 
+	NullBRDF(&materials[0].brdf);
+	LoadBRDF("materials/gray-plastic.binary", &materials[1].brdf);
+	LoadBRDF("materials/chrome.binary", &materials[2].brdf);
+
 	Plane planes[] =
 	{
 		{{0, 0, 1}, 0, 1 },
+		/*{{1, 0, 0}, 2, 1 },*/
 	};
 
 	Sphere spheres[] =
 	{
 		{{0.0f, -1.0f, 0.0f}, 1.0f, 2},
-		{{3.0f, -2.0f, 0.0f}, 1.0f, 3},
+		/*{{3.0f, -2.0f, 0.0f}, 1.0f, 3},
 		{{-2.0f, -1.0f, 2.0f}, 1.0f, 4},
 		{{1.0f, -1.0f, 2.5f}, 1.0f, 5},
-		{{-3.0f, 5.0f, 0.0f}, 3.0f, 6},
+		{{-3.0f, 5.0f, 0.0f}, 3.0f, 6},*/
 	};
 
 	World world = {};
@@ -368,6 +480,10 @@ int main(int argc, char** argv)
 	queue.raysPerPixel = RAYS_PER_PIXEL;
 	queue.maxBounceCount = 8;
 
+	if (argc == 2)
+	{
+		queue.raysPerPixel = atoi(argv[1]);
+	}
 	printf("Config: %d cores with %d of %dx%d tiles, with %d-wide lanes\n", coreCount, tileTotal, tileW, tileH, LANE_WIDTH);
 	printf("Quality: %d rays per pixel, max %d bounces\n", queue.raysPerPixel, queue.maxBounceCount);
 
